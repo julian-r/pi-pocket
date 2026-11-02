@@ -4,9 +4,11 @@ on:
         branches: [ci/mermaid-validation]
 permissions:
     contents: read
+env:
+    PI_POCKET_BROWSER: /usr/bin/google-chrome
 jobs:
     checks:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         timeout-minutes: 15
         steps:
             - uses: actions/checkout@v4
@@ -18,7 +20,7 @@ jobs:
             - run: npm ci && npm run check
               working-directory: docs-site
     core-tests:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         timeout-minutes: 30
         steps:
             - uses: actions/checkout@v4
@@ -26,7 +28,11 @@ jobs:
               with:
                   node-version: 24
             - run: npm ci
-            - run: google-chrome --version
+            - run: '"$PI_POCKET_BROWSER" --version'
+            - name: Sandboxed headless Chrome smoke test
+              run: >-
+                  timeout 20s "$PI_POCKET_BROWSER" --headless --no-first-run
+                  --user-data-dir="$RUNNER_TEMP/chrome-smoke" --dump-dom about:blank
             - run: npm test 2>&1 | tee core-tests.log
               shell: bash -o pipefail {0}
             - uses: actions/upload-artifact@v4
@@ -35,7 +41,7 @@ jobs:
                   name: core-test-log
                   path: core-tests.log
     mermaid-tests:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         timeout-minutes: 15
         steps:
             - uses: actions/checkout@v4
@@ -43,6 +49,10 @@ jobs:
               with:
                   node-version: 24
             - run: npm ci
-            - run: google-chrome --version
+            - run: '"$PI_POCKET_BROWSER" --version'
+            - name: Sandboxed headless Chrome smoke test
+              run: >-
+                  timeout 20s "$PI_POCKET_BROWSER" --headless --no-first-run
+                  --user-data-dir="$RUNNER_TEMP/chrome-smoke" --dump-dom about:blank
             - run: npm ci && npm run build && npm run check && npm test
               working-directory: contrib/mermaid
