@@ -1,0 +1,48 @@
+name: Mermaid PR validation
+on:
+    push:
+        branches: [ci/mermaid-validation]
+permissions:
+    contents: read
+jobs:
+    checks:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+            - run: npm ci
+            - run: npm run format:check && npm run lint && npm run check
+            - run: npm ci && npm run check
+              working-directory: docs-site
+    core-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+            - run: npm ci
+            - run: google-chrome --version
+            - run: npm test 2>&1 | tee core-tests.log
+              shell: bash -o pipefail {0}
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: core-test-log
+                  path: core-tests.log
+    mermaid-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+            - run: npm ci
+            - run: google-chrome --version
+            - run: npm ci && npm run build && npm run check && npm test
+              working-directory: contrib/mermaid
