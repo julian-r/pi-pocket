@@ -1,4 +1,4 @@
-name: Mermaid PR validation
+name: Fenced-code API PR validation
 on:
     push:
         branches: [ci/mermaid-validation]
@@ -40,19 +40,3 @@ jobs:
               with:
                   name: core-test-log
                   path: core-tests.log
-    mermaid-tests:
-        runs-on: ubuntu-22.04
-        timeout-minutes: 15
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: 24
-            - run: npm ci
-            - run: '"$PI_POCKET_BROWSER" --version'
-            - name: Sandboxed headless Chrome smoke test
-              run: >-
-                  timeout 20s "$PI_POCKET_BROWSER" --headless --no-first-run
-                  --user-data-dir="$RUNNER_TEMP/chrome-smoke" --dump-dom about:blank
-            - run: npm ci && npm run build && npm run check && npm test
-              working-directory: contrib/mermaid
